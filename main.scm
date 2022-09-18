@@ -185,3 +185,61 @@
            (iter (- trials-remaining 1) 
                  trials-passed))))
   (iter trials 0))
+
+;; Exercise 3.5
+
+(define (random-in-range low high)
+  (let ((range (- high low)))
+    (+ low (random range))))
+
+(define (point-inside-circle? point circle)
+  (<= (+ (square (- (xcor (center circle)) (xcor point)))
+	 (square (- (ycor (center circle)) (ycor point))))
+      (square (radius circle))))
+
+(define make-point cons)
+(define xcor car)
+(define ycor cdr)
+(define (make-circle center radius) (cons center radius))
+(define center car)
+(define radius cdr)
+(define make-rectangle cons)
+(define lower-corner car)
+(define higher-corner cdr)
+(define (area-rec rectangle)
+  (* (- (xcor (higher-corner rectangle))
+	(xcor (lower-corner rectangle)))
+     (- (ycor (higher-corner rectangle))
+	(ycor (lower-corner rectangle)))))
+
+(define unit-circle (make-circle (make-point 0 0) 1))
+(define inside-point (make-point 0.5 0.5))
+(define outside-point (make-point 2 3))
+;; (display (point-inside-circle? inside-point unit-circle)) (newline)
+;; (display (point-inside-circle? outside-point unit-circle)) (newline)
+
+
+(define (random-inside-circle? rect circle)
+  (let ((xlow (xcor (lower-corner rect)))
+	(xhigh (xcor (higher-corner rect)))
+	(ylow (ycor (lower-corner rect)))
+	(yhigh (ycor (higher-corner rect))))
+    (let ((random-point (make-point (random-in-range xlow xhigh)
+				    (random-in-range ylow yhigh))))
+  (point-inside-circle? random-point circle))))
+
+(define random-inside-unit-circle?
+  (lambda (rect)
+    (random-inside-circle? rect unit-circle)))
+
+(define (estimate-integral P x1 x2 y1 y2 trials)
+  (let ((rect (make-rectangle (make-point x1 y1)
+			      (make-point x2 y2))))
+      (* (monte-carlo trials (lambda () (P rect))) (area-rec rect))))
+
+(define (integral-unit-circle trials)
+  (estimate-integral random-inside-unit-circle? -1.0 1.0 -1.0 1.0 trials))
+
+;; (display (integral-unit-circle 1000000)) (newline)
+
+
