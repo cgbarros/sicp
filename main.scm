@@ -242,4 +242,25 @@
 
 ;; (display (integral-unit-circle 1000000)) (newline)
 
+;; Exercise 3.6
 
+;;original rand
+(define rand
+    (let ((x random-init))
+          (lambda () (set! x (rand-update x)) x)))
+
+(define random-init 1)
+(define rand-update ++)
+
+(define rand
+	(let ((x random-init))
+		(define (generate) 
+			(set! x (rand-update x))
+			x)
+		(define (reset new-value)
+			(set! x new-value)
+			x)
+		(define (dispatch m)
+			(cond ((eq? m 'generate) (generate))
+						((eq? m 'reset) reset)))
+		dispatch))
