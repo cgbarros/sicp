@@ -4,3 +4,4 @@
 (cf "sec2.3.scm")
 (cf "sec2.4.scm")
 (cf "sec2.5.scm")
+(cf "sec3.1.scm")
