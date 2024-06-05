@@ -523,31 +523,205 @@
 
 ;; Exercise 3.25: Generalizing one-and two-dimensional tables, show how to implement a table in which values are stored under an arbitrary number of keys and different values may be stored under different numbers of keys. The lookup and insert! procedures should take as input a list of keys used to access the table.
 
-(define (lookup key-list table)
-	(cond ((null? (car key-list)) #f)
-				((null? (cdr key-list))
-				 (let ((record (assoc (car key-list) (cdr table))))
-					 (if record
-							 (cdr record)
-							 false)))
-				(else (let ((subtable (assoc (car key-list) (cdr table))))
-							(lookup (cdr key-list) subtable)))))
+(define (make-table same-key?)
+	 (let ((local-table (list '*table*)))
+		 
+		(define (assoc key records)
+		  (cond ((null? records) false)
+		        ((same-key? key (caar records)) 
+		         (car records))
+		        (else (assoc key (cdr records)))))
+		 
+		 (define (lookup-helper key-list table)
+			(cond ((null? (car key-list)) #f)
+						((null? (cdr key-list))
+						 (let ((record (assoc (car key-list) (cdr table))))
+							 (if record
+									 (cdr record)
+									 false)))
+						(else (let ((subtable (assoc (car key-list) (cdr table))))
+									(lookup-helper (cdr key-list) subtable)))))
 
-(define (insert! key-list value table)
-	(if (cdr key-list)
-			(let ((subtable 
-						(assoc (car key-list) (cdr table))))
-				(if subtable
-						(insert! (cdr key-list) value subtable)
-						(set-cdr! subtable 
-						 				  (cons (car key-list)
-														(insert! (cdr key-list) value subtable)))))
-			value))
+		 (define (lookup key-list)
+			 (lookup-helper key-list local-table))
+		 
+		 ; first check if there are still keys in the list
+				; if there are, check if the key exists
+					; if the key exists navigate through the subtable and keep going
+					; if it doesn't, we create a subtable and keep going
+				; when we get to the last key, we add the value to the key-value pair. It doesn't matter if the last pair exists or not, if it does we will override it anyway
 
-(define test-table (list '*table*))
+		(define (add-record! key-list value)
+			(if (null? (cdr key-list))
+					(cons (car key-list) value)
+					(cons (car key-list) (list (add-record! (cdr key-list) value)))))
+		
+		(define (insert-helper! key-list value table)
+			(if (not (null? (cdr key-list)))
+					(let ((subtable (assoc (car key-list) (cdr table))))
+						(if subtable
+								(insert-helper! (cdr key-list) value subtable)
+								(set-cdr! table
+													(cons (cons (car key-list)
+																			(list (add-record! (cdr key-list) value)))
+																(cdr table)))))
+					(let ((record (assoc (car key-list) (cdr table))))
+						(if record
+								(set-cdr! record value)
+								(set-cdr! table 
+													(cons	(cons (car key-list) 
+																			value)
+																(cdr table)))))))
+		 
+			(define (insert! key-list value)
+				(insert-helper! key-list value local-table))
+		 
+		(define (dispatch m)
+					(cond ((eq? m 'lookup-proc) lookup)
+								((eq? m 'insert-proc!) insert!)
+								((eq? m 'show) (show local-table))
+								(else (error "Unknown operation: 
+															TABLE" m))))
+		 dispatch))
 
-; first check if there are still keys in the list
-; if there are, check if the key exists
-	; if the key exists navigate through the subtable and keep going
-	; if it doesn't, we create a subtable and keep going
-; when we get to the last key, we add the value to the key-value pair. It doesn't matter if the last pair exists or not, if it does we will override it anyway
+;;;; tests below
+
+;; (define test-table (make-table eq?))
+;; (define (lookup key-list table) 
+;; 	((table 'lookup-proc) key-list))
+;; (define (insert! key-list value table)
+;; 	((table 'insert-proc!) key-list value))
+
+
+;; (insert! '(test-a) 'a test-table)
+;; (insert! '(test-b) 'b  test-table)
+;; (show (lookup '(test-a) test-table))
+;; (show (lookup '(test-b) test-table))
+;; (insert! '(test-a) 'c test-table)
+;; (show (lookup '(test-a) test-table))
+
+;; (insert! '(1 a b) 'test1 test-table)
+;; (show (lookup '(1 a b) test-table))
+
+;; (insert! '(1 a c) 'test2 test-table)
+;; (show (lookup '(1 a c) test-table))
+
+;; (insert! '(b 2) 'test3 test-table)
+;; (show (lookup '(b 2) test-table))
+
+;; (test-table 'show)
+
+;; Exercise 3.26: To search a table as implemented above, one needs to scan through the list of records. This is basically the unordered list representation of 2.3.3. For large tables, it may be more efficient to structure the table in a different manner. Describe a table implementation where the (key, value) records are organized using a binary tree, assuming that keys can be ordered in some way (e.g., numerically or alphabetically). (Compare Exercise 2.66 of Chapter 2.)
+
+;; if a table is unidimentional, then the implementation would be the same as ex. 2.66, that is, a key-value set implemented as a tree. The trick is to generalize to n dimensions
+
+;; if not, then each dimension is a tree of keys whose values point to another tree. The last dimension (n) will be a key-value pair. Therefore a table like this:
+
+;; 			1		2		3		4
+;;		----------------
+;; a	| a1	a2	a3	a4
+;; b	| b1	b2	b3	b4
+;; c	| c1	c2	c3	c4
+;; d	| d1	d2	d3	d4
+
+;; will be represented by a tree like
+
+	;; 		 3
+	;; 	  / \
+	;; 	 2	 4
+	;;  /
+	;; 1
+
+;; and each node (key) of the tree has as its value a pointer to a tree of type
+
+	;; 		 c
+	;; 	  / \
+	;; 	 b	 d
+	;;  /
+	;; a
+
+;; (i.e.) four trees of the type above, each one with the corresponding values
+
+;; see an implementation of a simple key-pair tree at https://www.inchmeal.io/sicp/ch-3/ex-3.26.html
+;; as a project, I could create a table with arbitrary depth - but for that I need to learn how to balance a tree after an insertion.
+
+;; redefining lookup, assoc and insert! for the next exercise:
+(define (lookup key table)
+  (let ((record (assoc key (cdr table))))
+    (if record
+        (cdr record)
+        false)))
+
+(define (assoc key records)
+  (cond ((null? records) false)
+        ((equal? key (caar records)) 
+         (car records))
+        (else (assoc key (cdr records)))))
+
+(define (insert! key value table)
+  (let ((record (assoc key (cdr table))))
+    (if record
+        (set-cdr! record value)
+        (set-cdr! table
+                  (cons (cons key value) 
+                        (cdr table)))))
+  'ok)
+
+;; Exercise 3.27: Memoization (also called tabulation) is a technique that enables a procedure to record, in a local table, values that have previously been computed. This technique can make a vast difference in the performance of a program. A memoized procedure maintains a table in which values of previous calls are stored using as keys the arguments that produced the values. When the memoized procedure is asked to compute a value, it first checks the table to see if the value is already there and, if so, just returns that value. Otherwise, it computes the new value in the ordinary way and stores this in the table. As an example of memoization, recall from 1.2.2 the exponential process for computing Fibonacci numbers:
+
+(define (fib n)
+  (cond ((= n 0) 0)
+        ((= n 1) 1)
+        (else (+ (fib (- n 1))
+                 (fib (- n 2))))))
+
+;; The memoized version of the same procedure is
+
+;; (define memo-fib
+;;   (memoize 
+;;    (lambda (n)
+;;      (cond ((= n 0) 0)
+;;            ((= n 1) 1)
+;;            (else 
+;;             (+ (memo-fib (- n 1))
+;;                (memo-fib (- n 2))))))))
+
+;; where the memoizer is defined as
+
+(define (make-table)
+  (list '*table*))
+
+(define (memoize f)
+  (let ((table (make-table)))
+    (lambda (x)
+      (let ((previously-computed-result 
+             (lookup x table)))
+        (or previously-computed-result
+            (let ((result (f x)))
+              (insert! x result table)
+              result))))))
+
+(define memo-fib
+  (memoize 
+   (lambda (n)
+     (cond ((= n 0) 0)
+           ((= n 1) 1)
+           (else 
+            (+ (memo-fib (- n 1))
+               (memo-fib (- n 2))))))))
+
+;;  If we define memo-fib to be (memorize fib), the procedure won't work, because fib calls itself to compute (fib n), so it doesn't memoize.
+
+;; to understand the syntax better:
+
+(define (my-cons proc) 
+	(lambda (x) 
+		(cons (proc x) 2)))
+
+;Value: my-cons
+
+(define test 
+	(my-cons (lambda (n) (+ n n))))
+
+(show (test 4))
+;Value: (8 . 2)
