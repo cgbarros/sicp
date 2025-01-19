@@ -414,7 +414,7 @@
 
 ;; now, let's look at the case where we set the wires, connect to the and-gate, and then change the wires signals
 ;; one important thing to note is that when set-signal! is called for a wire, and the signal is the same as before, make-wire will change the signal and call all the actions in the action list:
-;; (define (set-my-signal! new-value)
+;; (define (set-signal! new-value)
 ;; 	(if (not (= signal-value new-value))
 ;; 			(begin (set! signal-value new-value)
 ;; 						 (call-each action-procedures)) ; this call-each is important
@@ -424,7 +424,7 @@
 ;; - wire a is set to 0. It is different to the null value as before, but there is nothing in action-procedures, so nothing happens
 ;; - wire b is set to 1. Same as before
 ;; - and-gate is called. It will add and-logical-procedure twice to the agenda, and each wire will have its own and-action-procedure to its action-procedures list
-;; - wire a is set to 1. It is different as the previous value, so it will change its value and run the and-action-procedure on its list
+;; - wire a is set to 1. It is different from the previous value, so it will change its value and run the and-action-procedure on its list
 ;; - since wire b is 1, and-action-procedure will set the output to 1 this time
 ;; - now b is set to 0, and it now runs the and-action-procedure on its list
 ;; - and since wire a is 1, it will set the output to 0 this time				
@@ -443,24 +443,27 @@
 	(add-action! a2 and-action-procedure)
 	'ok)
 
-(define and-gate-delay 1)
-(define test1-wirea (make-wire))
-(define test1-wireb (make-wire))
-(define test1-output (make-wire))
-(set-signal! test1-wirea 0)
-(set-signal! test1-wireb 1)
-(test1-and-gate test1-wirea test1-wireb test1-output)
-(newline)
-(display the-agenda)
-(set-signal! test1-wirea 1)	
-(set-signal! test1-wireb 0)
-(newline)
-(display the-agenda)
-(propagate)
-(newline)
-(display the-agenda)
-(newline)
-(display (get-signal test1-output))
+;; (newline) (display "testing the agenda: ")
+;; (newline) (display the-agenda)
+
+;; (define and-gate-delay 1)
+;; (define test1-wirea (make-wire))
+;; (define test1-wireb (make-wire))
+;; (define test1-output (make-wire))
+;; (set-signal! test1-wirea 0)
+;; (set-signal! test1-wireb 1)
+;; (test1-and-gate test1-wirea test1-wireb test1-output)
+;; (newline)
+;; (display the-agenda)
+;; (set-signal! test1-wirea 1)	
+;; (set-signal! test1-wireb 0)
+;; (newline)
+;; (display the-agenda)
+;; (propagate)
+;; (newline)
+;; (display the-agenda)
+;; (newline)
+;; (display (get-signal test1-output))
 
 ;; wire a is: 0
 ;; wire b is: 1
@@ -484,90 +487,303 @@
 ;; - wire a is set to 0. It is different to the null value as before, but there is nothing in action-procedures, so nothing happens
 ;; - wire b is set to 1. Same as before
 ;; - and-gate is called. It will add and-logical-procedure twice to the agenda, and each wire will have its own and-action-procedure to its action-procedures list (#1 and #2 in the agenda)
-;; - wire a is set to 1. It is different as the previous value, so it will change its value and run the and-action-procedure on its list. Since wire b is still 1, it will the output to 1 (#3 in the agenda)
+;; - wire a is set to 1. It is different as the previous value, so it will change its value and run the and-action-procedure on its list. Since wire b is still 1, it will set the output to 1 (#3 in the agenda)
 ;; - now b is set to 0, and it now runs the and-action-procedure on its list, and since wire a is 1, it will set the output to 0 this time (#4)
 ;; the agenda will be read at opposite order this time (4, 3, 2, 1) 
 ;; 	- #4 sets the output to 0
 ;;  - #3 sets the output to 1
 ;;  - #2 and 1 don't change the output, so it will keep the output as 1
 
-(define (test2-add-to-agenda! time action agenda)
-	(define (belongs-before? segments)
-		(newline) (display "segments: ") 	(display segments)
-		(or (null? segments)
-				(< time (segment-time (car segments)))))
-	(define (make-new-time-segment time action)
-		(let ((l '()))
-				(cons action l)
-				(newline) (display "time segme	nt list: ") (display l)
-				(make-time-segment time l)
-				(newline) (display "time segment: ") (display (make-time-segment time l))))
-	(define (add-to-segments! segments)
-		(if (= (segment-time (car segments)) time)
-				(cons action (car segments))
-					(let ((rest (cdr segments)))
-						(if (belongs-before? rest)
-								(set-cdr!
-								 segments
-								 (cons (make-new-time-segment time action)
-											 (cdr segments)))
-								(add-to-segments! rest)))))
-	(let ((segments (segments agenda)))
-		(newline) (display "belongs-before? ") (display (belongs-before? segments))
-		(if (belongs-before? segments)
-				(set-segments!
-				 agenda
-		 (cons (make-new-time-segment time action)
-							 segments))
-	(add-to-segments! segments))))
+;; (define (test2-make-time-segment time l)
+;; 	(cons time l))
+;; (define (test2-segment-time s) (car s))
+;; (define (test2-segment-list s) (cdr s))
 
-(define (test2-make-time-segment time l)
-	(cons time l))
+;; (define (test2-make-agenda) (list 0))
 
-(define (test2-after-delay delay action)
-(test2-add-to-agenda! (+ delay (current-time test2-the-agenda))
-								action
-								test2-the-agenda))
+;; (define (test2-current-time agenda) (car agenda))
+;; (define (test2-set-current-time! agenda time) 
+;; 	(set-car! agenda time))
 
-(define (test2-and-gate a1 a2 output)
-(define (test2-and-action-procedure)
-	(let ((new-value
-				 (logical-and (get-signal a1) (get-signal a2))))
-		(newline) (display "test2-wire a is: ") (display (get-signal a1))
-		(newline) (display "test2-wire b is: ") (display (get-signal a2))
-		(newline) (display "new value for test2-output is: ") (display new-value)
-		(test2-after-delay and-gate-delay
-								 (lambda ()
-									 (set-signal! output new-value)))))
-(add-action! a1 test2-and-action-procedure)
-(add-action! a2 test2-and-action-procedure)
-'ok)
+;; (define (test2-segments agenda) (cdr agenda))
+;; (define (test2-set-segments! agenda l) 
+;; 	(set-cdr! agenda l))
+;; (define (test2-first-segment agenda) 
+;; 	(car (test2-segments agenda)))
+;; (define (test2-rest-segments agenda)
+;; 	(cdr (test2-segments agenda)))
 
-(define (test2-make-agenda) (list 0))
+;; (define (test2-empty-agenda? agenda) 
+;; 	(null? (test2-segments agenda)))
 
-(define test2-the-agenda (test2-make-agenda))
+;; ;;; still needs to be implemented! will do this at another time
 
-(define (test2-propagate)
-	(if (empty-agenda? test2-the-agenda)
-			'done
-			(let ((first-item (first-agenda-item test2-the-agenda)))
-				(first-item)
-				(remove-first-agenda-item! test2-the-agenda)
-				(test2-propagate))))
+;; (define (test2-add-to-agenda! time action agenda)
+;; 	(define (belongs-before? segments)
+;; 		(or (null? segments)
+;; 				(< time (test2-segment-time (car segments)))))
+;; 	(define (make-new-time-segment time action)
+;; 		(list time action)) ; returns (time action)
+;; 	(define (add-to-segments! segments)
+;; 		(let ((current-segment (car segments)))
+;; 			(if (= (test2-segment-time current-segment) time)
+;; 				(begin
+;; 					(newline) (display "segments have the same time")
+;; 					(set! current-segment (cons time (cons action (test2-segment-list current-segment))))
+;; 				  (newline) (display current-segment)
+;; 				 )
+;; 				(let ((rest (cdr segments)))
+;; 					(if (belongs-before? rest)
+;; 						(set! segments
+;; 							(list (make-new-time-segment time action) 
+;; 										rest)))
+;; 					(add-to-segments! rest)))))
+;; 	(let ((segments (test2-segments agenda)))
+;; 		(if (belongs-before? segments)
+;; 				(test2-set-segments! 
+;; 					agenda
+;; 				  (list (make-new-time-segment time action) segments))
+;; 				(add-to-segments! segments))))
 
-(define and-gate-delay 1)
-(define test2-wirea (make-wire))
-(define test2-wireb (make-wire))
-(define test2-output (make-wire))
-(set-signal! test2-wirea 0)
-(set-signal! test2-wireb 1)
-(test2-and-gate test2-wirea test2-wireb test2-output)
-(newline) (display "test2-the-agenda: ") (display test2-the-agenda)
-(set-signal! test2-wirea 1)	
-(set-signal! test2-wireb 0)
-(newline) (display "test2-the-agenda: ") (display test2-the-agenda)
-(test2-propagate)
-(newline)
-(newline) (display "test2-the-agenda: ") (display test2-the-agenda)
-(newline)
-(display (get-signal test2-output))
+;; (define (test2-remove-first-agenda-item! agenda)
+;; 	(let ((l (test2-segment-list (test2-first-segment agenda))))
+;; 		(set! l (cdr l))
+;; 		(if (null? l)
+;; 				(test2-set-segments! agenda (test2-rest-segments agenda)))))
+
+;; (define (test2-first-agenda-item agenda)
+;; 	(if (test2-empty-agenda? agenda)
+;; 			(error "Agenda is empty -- FIRST-AGENDA-ITEM")
+;; 			(let ((fist-seg (test2-first-segment agenda)))
+;; 				(set-current-time! agenda (test2-segment-time fist-seg))
+;; 				(car (test2-segment-list fist-seg)))))
+
+;; (define (test2-after-delay delay action)
+;; 	(test2-add-to-agenda! (+ delay (test2-current-time the-agenda))
+;; 									action
+;; 									the-agenda))
+
+;; (define (test2-propagate)
+;; 	(if (test2-empty-agenda? the-agenda)
+;; 			'done
+;; 			(let ((first-item (test2-first-agenda-item the-agenda)))
+;; 				(first-item)
+;; 				(test2-remove-first-agenda-item! the-agenda)
+;; 				(test2-propagate))))
+
+;; (define (test2-and-gate a1 a2 output)
+;; 	(define (and-action-procedure)
+;; 		(let ((new-value
+;; 					 (logical-and (get-signal a1) (get-signal a2))))
+;; 			(test2-after-delay and-gate-delay
+;; 									 (lambda ()
+;; 										 (set-signal! output new-value)))
+;; 			(newline) (display "test2-wire a1 is: ") (display (get-signal a1))
+;; 			(newline) (display "test2-wire a2 is: ") (display (get-signal a2))
+;; 			(newline) (display "new value for test2-output is: ") (display new-value)
+;; 		))
+;; 	(add-action! a1 and-action-procedure)
+;; 	(add-action! a2 and-action-procedure)
+;; 	'ok)
+
+;; (define (test2-add-to-agenda! time action agenda)
+;; 	(define (belongs-before? segments)
+;; 		(newline) (display "segments: ") 	(display segments)
+;; 		(or (null? segments)
+;; 				(< time (car (car segments)))))
+;; 	(define (make-new-time-segment time action)
+;; 		(let ((l '()))
+;; 				(list action l)
+;; 				(newline) (display "time segme	nt list: ") (display l)
+;; 				(make-time-segment time l)
+;; 				(newline) (display "time segment: ") (display (make-time-segment time l))))
+;; 		(list time (list action)))
+;; 	(define (add-to-segments! segments)
+;; 		(if (= (segment-time (car segments)) time)
+;; 				(cons action (car segments))
+;; 					(let ((rest (cdr segments)))
+;; 						(if (belongs-before? rest)
+;; 								(set-cdr!
+;; 								 segments
+;; 								 (cons (make-new-time-segment time action)
+;; 											 (cdr segments)))
+;; 	(let ((segments (segments agenda)))
+;; 		(newline) (display "belongs-before? ") (display (belongs-before? segments))
+;; 		(if (belongs-before? segments)
+;; 				(set-segments!
+;; 				 agenda
+;; 		 (cons (make-new-time-segment time action)
+;; 							 segments))
+;; 	(add-to-segments! segments))))
+	
+
+;; (define (test2-make-time-segment time l)
+;; 	(cons time l))
+
+;; (define (test2-after-delay delay action)
+;; 	(test2-add-to-agenda! (+ delay (current-time test2-the-agenda))
+;; 									action
+;; 									test2-the-agenda))
+
+
+;; (define the-agenda (test2-make-agenda))
+;; (define and-gate-delay 1)
+;; (define test2-wirea (make-wire))
+;; (define test2-wireb (make-wire))
+;; (define test2-output (make-wire))
+;; (set-signal! test2-wirea 0)
+;; (set-signal! test2-wireb 1)
+;; (test2-and-gate test2-wirea test2-wireb test2-output)
+;; (newline) (display "test2-the-agenda: ") (display the-agenda)
+;; (set-signal! test2-wirea 1)	
+;; (set-signal! test2-wireb 0)
+;; (newline) (display "test2-the-agenda: ") (display the-agenda)
+;; (test2-propagate)
+;; (newline)
+;; (newline) (display "test2-the-agenda: ") (display the-agenda)
+;; (newline)
+;; (display (get-signal test2-output))
+
+;; ex 3.33
+
+;; (define a (make-connector))
+;; (define b (make-connector))
+;; (define c (make-connector))
+
+;; (define (average a b c)
+;; 	(let ((u (make-connector))
+;; 				(v (make-connector)))
+;; 		(adder a b u)
+;; 		(multiplier u v c)
+;; 		(constant 0.5 v)
+;; 		'ok))
+
+;; (average a b c)
+
+;; (probe "average a" a)
+;; (probe "average b" b)
+;; (probe "average c" c)
+
+;; (set-value! a 8 'user)
+;; (set-value! b 10 'user)
+
+;; (forget-value! a 'user)
+;; (set-value! c 25 'user)
+
+;; (forget-value! b 'user)
+;; (set-value! a 50 'user)
+
+;; ex. 3.34
+
+;; the multiplier doesn't have a procedure to handle the situation where both of its inputs are the same connector and just the product changes. it will not update the multipliers
+
+;; (define a (make-connector))
+;; (define p (make-connector))
+
+;; (multiplier a a p)
+;; (probe "a" a)
+;; (probe "p" p)
+
+;; (set-value! a 8 'user)
+;; ;; this works
+
+;; (forget-value! a 'user)
+;; (set-value! p 64 'user)
+;; ;; this does nothing
+
+;; we could add the conditional to deal with that situation 
+
+;; (define (new-multiplier m1 m2 product)
+;;   (define (process-new-value)
+;;     (cond ((or (and (has-value? m1) (= (get-value m1) 0))
+;;                (and (has-value? m2) (= (get-value m2) 0)))
+;;            (set-value! product 0 me))
+;;           ((and (has-value? m1) (has-value? m2))
+;;            (set-value! product
+;;                        (* (get-value m1) (get-value m2))
+;;                        me))
+;;           ((and (has-value? product) (has-value? m1))
+;;            (set-value! m2
+;;                        (/ (get-value product) (get-value m1))
+;;                        me))
+;;           ((and (has-value? product) (has-value? m2))
+;;            (set-value! m1
+;;                        (/ (get-value product) (get-value m2))
+;;                        me))
+;; 					; desling with square root
+;; 					((and (eq? m1 m2) (not (has-value? m1)))
+;;            (set-value! m1
+;;                        (sqrt (get-value product))
+;;                        me))))
+;;   (define (process-forget-value)
+;;     (forget-value! product me)
+;;     (forget-value! m1 me)
+  ;;   (forget-value! m2 me)
+  ;;   (process-new-value))
+  ;; (define (me request)
+  ;;   (cond ((eq? request 'I-have-a-value)
+  ;;          (process-new-value))
+  ;;         ((eq? request 'I-lost-my-value)
+  ;;          (process-forget-value))
+  ;;         (else
+  ;;          (error "Unknown request -- MULTIPLIER" request))))
+  ;; (connect m1 me)
+  ;; (connect m2 me)
+  ;; (connect product me)
+  ;; me)
+
+(define (sqrt x)
+  (define (good-enough? guess)
+    (< (abs (- (square guess) x)) 0.001))
+  (define (improve guess)
+    (average guess (/ x guess)))
+  (define (sqrt-iter guess)
+    (if (good-enough? guess)
+        guess
+        (sqrt-iter (improve guess))))
+  (sqrt-iter 1.0))
+
+(define (average x y)
+  (/ (+ x y) 2))
+
+;; (newline) (display "now using new-multiplier")
+
+;; (define a (make-connector))
+;; (define p (make-connector))
+
+;; (new-multiplier a a p)
+;; (probe "a" a)
+;; (probe "p" p)
+
+;; (set-value! a 8 'user)
+
+(define (squarer a b)
+  (define (process-new-value)
+    (if (has-value? b)
+        (if (< (get-value b) 0)
+            (error "square less than 0 -- SQUARER" (get-value b))
+            (set-value! a (sqrt (get-value b)) me))
+        (if (has-value? a)
+						(let ((a-value (get-value a)))
+							(set-value! b (* a-value a-value) me)))))
+  (define (process-forget-value)
+		(forget-value! a me)
+		(forget-value! b me)
+		(process-new-value))
+  (define (me request)
+		(cond ((eq? request 'I-have-a-value) (process-new-value))
+					((eq? request 'I-lost-my-value) (process-forget-value))
+					(else (error "Unknown request -- SQUARER" request))))
+  (connect a me)
+	(connect b me)
+  me)
+
+(define a (make-connector))
+(define b (make-connector))
+(squarer a b)
+(probe "a" a)
+(probe "b" b)
+
+(set-value! a 8 'user)
+(forget-value! a 'user)
+(set-value! b 64 'user)

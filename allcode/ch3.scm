@@ -6,7 +6,6 @@
 
 ;;; BEWARE: Although the whole file can be loaded into Scheme,
 ;;;  you won't want to do so.  For example, you generally do
-;;;  not want to use the procedural representation of pairs
 ;;;  (cons, car, cdr as defined in section 3.3.1) instead of
 ;;;  Scheme's primitive pairs.
 
@@ -726,15 +725,15 @@
         (remove-first-agenda-item! the-agenda)
         (propagate))))
 
-(define (probe name wire)
-  (add-action! wire
-               (lambda ()        
-                 (newline)
-                 (display name)
-                 (display " ")
-                 (display (current-time the-agenda))
-                 (display "  New-value = ")
-                 (display (get-signal wire)))))
+;; (define (probe name wire)
+;;   (add-action! wire
+;;                (lambda ()        
+;;                  (newline)
+;;                  (display name)
+;;                  (display " ")
+;;                  (display (current-time the-agenda))
+;;                  (display "  New-value = ")
+;;                  (display (get-signal wire)))))
 
 ;;; Sample simulation
 
@@ -933,26 +932,26 @@
   (set-value! connector value me)
   me)
 
-;; (define (probe name connector)
-;;   (define (print-probe value)
-;;     (newline)
-;;     (display "Probe: ")
-;;     (display name)
-;;     (display " = ")
-;;     (display value))
-;;   (define (process-new-value)
-;;     (print-probe (get-value connector)))
-;;   (define (process-forget-value)
-;;     (print-probe "?"))
-;;   (define (me request)
-;;     (cond ((eq? request 'I-have-a-value)
-;;            (process-new-value))
-;;           ((eq? request 'I-lost-my-value)
-;;            (process-forget-value))
-;;           (else
-;;            (error "Unknown request -- PROBE" request))))
-;;   (connect connector me)
-;;   me)
+(define (probe name connector)
+  (define (print-probe value)
+    (newline)
+    (display "Probe: ")
+    (display name)
+    (display " = ")
+    (display value))
+  (define (process-new-value)
+    (print-probe (get-value connector)))
+  (define (process-forget-value)
+    (print-probe "?"))
+  (define (me request)
+    (cond ((eq? request 'I-have-a-value)
+           (process-new-value))
+          ((eq? request 'I-lost-my-value)
+           (process-forget-value))
+          (else
+           (error "Unknown request -- PROBE" request))))
+  (connect connector me)
+  me)
 
 (define (make-connector)
   (let ((value false) (informant false) (constraints '()))
