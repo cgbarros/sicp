@@ -787,3 +787,56 @@
 (set-value! a 8 'user)
 (forget-value! a 'user)
 (set-value! b 64 'user)
+
+;; 3.38 
+;; a) possible balance values after these 3 concurrent transactions:
+
+;; Peter: (set! balance (+ balance 10))
+;; Paul: (set! balance (- balance 20))
+;; Mary: (set! balance (- balance (/ balance 2)))
+
+;; 1)
+;; 100 + 10 = 110
+;; 110 - 20 = 90
+;; 90 / 2 = 45
+
+;; 2)
+;; 100 + 10 = 110
+;; 110 / 2 = 55
+;; 55 - 20 = 35
+
+;; 3)
+;; 100 - 20 = 80
+;; 80 + 10 = 90
+;; 90 / 2 = 45
+;; (= 1)
+
+;; 4)
+;; 100 - 20 = 80
+;; 80 / 2 = 40
+;; 40 + 10 = 50
+
+;; 5)
+;; 100 / 2 = 50
+;; 50 + 10 = 60
+;; 60 - 20 = 40
+
+;; 6)
+;; 100 / 2 = 50
+;; 50 - 20 = 30
+;; 30 + 10 = 40
+
+;; if the dision is the second step, the order of the other transactions matters. Otherwise, what dictates the end value is the division. Possible values are (in ascending order): 35, 40, 45, 50
+
+;; b) some other values if the system allows interleaved processes
+
+;; in this case, the account balance might differ for each user. e.g.
+;; Mary: 
+;; - balance = 100
+;; - (set! balance (- balance (/ balance 2)))
+;; - balance = 50
+
+;; Peter:
+;; - balance = 100
+;; - (set! balance (+ balance 10))
+;; - balance = 110
