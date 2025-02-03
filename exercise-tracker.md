@@ -40,16 +40,16 @@
 - [x] 3.32
 - [x] 3.33
 - [x] 3.34
-- [ ] 3.35
+- [x] 3.35
 - [ ] 3.36 - hard - draw environment diagrm
-- [X] 3.37 - easy - redefine constrains
+- [x] 3.37 - easy - redefine constrains
 
 ### 3.4 – Concurrency: Time Is of the Essence
-- [ ] 3.38
-- [ ] 3.39
-- [ ] 3.40
-- [ ] 3.41
-- [ ] 3.42
+- [x] 3.38
+- [ ] 3.39 - hard - need to write down
+- [ ] 3.40 - easy
+- [ ] 3.41 - easy
+- [ ] 3.42 - hard
 - [ ] 3.43
 - [ ] 3.44
 - [ ] 3.45

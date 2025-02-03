@@ -959,3 +959,90 @@
 ;; - balance = 100
 ;; - (set! balance (+ balance 10))
 ;; - balance = 110
+
+;; 3.40
+
+;; Give all possible values of x that can result
+;; from executing
+;; (define x 10)
+;; (parallel-execute (lambda () (set! x (* x x))) ;; p1
+;;   (lambda () (set! x (* x x x)))) ;; p2
+
+there are 7 operations:
+p1A. p1 accesses x for the first time
+p1B. p1 accesses x for the second time
+p1X. p1 sets x as (* x x)
+p2A. p2 accesses x for the first time
+p2B. p2 accesses x for the second time
+p2C. p2 accesses x for the third time
+p2X. p2 sets x as (* x x x)
+
+- p1X can only occur after p1A and p1B
+- p2X can only occur after p2A, p2B and p2C
+- p1B can only occur after p1A
+- p2B can only occur after p2A
+- p2C can only occur after p2B
+
+so, the possibilities are:
+- p1A or p2A
+  - (p1A): p1B or p2A ; p1A = 10 
+    - (p1B): p1X or p2A ; p1A = 10, p1B = 10
+	    - (p1X, p2A, p2B, p2C, p2X): 1000000 ; p1A = 10, p1B = 10, p1X = 100 | p2A = 100, p2B = 100, p2C = 100, p2X = 100000
+			- (p2A): p1X or p2B ; p1A = 10, p1B = 10, p2A = 10
+			  - (p1X, p2B, p2C, p2X): 100000 ; p1A = 10, p1B = 10, p1X = 100 | p2A = 10, p2B = 100, p2C = 100, p2X = 100000
+				- (p2B): p1X or p2C ; p1A = 10, p1B = 10, p2A = 10, p2B = 10
+					- (p1X, p2C, p2X): 10000 ; p1A = 10, p1B = 10, p1X = 100 | p2A = 10, p2B = 10, p2C = 100, p2X = 10000
+					- (p2C): p1X or p2X ; p2C = 10
+					  - (p1X, p2X): 1000 ; p1X = 100, p2X = 1000 (10 * 10 * 10)
+						- (p2X, p1X): 100 ; p2X = 1000, p1X = 100
+		- (p2A): p1X or p2B ; p1A = 10, p1B = 10, p2A = 10
+			- (p1X, p2B, p2C, p2X): 100000 ; p1X = 100, p2B = 100, p2C = 100, p2X = 100000
+			- (p2B): p1X or p2C ; p2A = 10,  p2B = 10
+			  - (p1X, p2C, p2X): 10000 ; p1X = 100, p2C = 100, p2X = 10 * 10 * 100 = 10000
+				- (p2C): p1X or p2X ; p2C = 10
+					- (p1X, p2X): 1000 ; p1X = 100, p2X = 1000 (10 * 10 * 10)
+					- (p2X, p1X): 100 ; p2X = 1000, p1X = 100
+	- (p2A): p1A or p2B ; p2A = 10
+	  - (p1A): p1B or p2B ; p1A = 10
+		  - (p1B): p1X or p2B ; p1B = 10
+			  - (p1X, p2B, p2C, p2X): 100000 ; p1X = 100 | p2A = 10, p2B = 100, p2C = 100, p2X = 100000
+				- (p2B): p1X or p2C ; p2B = 10
+					- (p1X, p2C, p2X): 10000 ; p1X = 100, p2C = 100, p2X = 10 * 10 * 100 = 10000
+					- (p2C): p1X or p2X ; p2C = 10
+					  - (p1X, p2X): 1000 ; p1X = 100, p2X = 1000 (10 * 10 * 10)
+						- (p2X, p1X): 100 ; p2X = 1000, p1X = 100
+		  - (p2B): p1B or p2C ; p2B = 10
+		    - (p1B): p1X or p2C ; p1B = 10
+			    - (p1X, p2C, p2X): 10000 ; p1X = 100 | p2C = 100, p2X = 10 * 10 * 100 = 10000
+			 	  - (p2C): p1X or p2X ; p2C = 10
+				   - (p1X, p2X): 1000 ; p1X = 100, p2X = 1000 (10 * 10 * 10)
+				   - (p2X, p1X): 100 ; p2X = 1000, p1X = 100
+		 	  - (p2C): p1X or p2X ; p2C = 10
+				  - (p1X, p2X): 1000
+				  - (p2X, p1X): 100
+	  - (p2B): p1A or p2C ; p2B = 10
+		  - (p1A): p1B or p2C ; p1A = 10
+			  - (p1B): p1X or p2C ; p1B = 10
+				  - (p1X, p2C, p2X): 10000 ; p1X = 100 | p2C = 100, p2X = 10 * 10 * 100 = 10000
+					- (p2C): p1X or p2X ; p2C = 10
+					  - (p1X, p2X): 1000
+						- (p2X, p1X): 100
+				- (p2C): p1B or p2X ; p2C = 10
+				  - (p1B): p1X or p2X ; p1B = 10
+					  - (p1X, p2X): 1000
+						- (p2X, p1X): 100
+					- (p2X, p1B, p1X): 10000 ; p2X = 1000, p1B = 1000, p1X = 10000
+		  - (p2C): p1A or p2X ; p2C = 10
+			  - (p1A): p1B or p2X ; p1A = 10
+				  - (p1B): p1X or p2X ; p1B = 10
+					  - (p1X, p2X): 1000
+						- (p2X, p1X): 100
+					- (p2X, p1B, p1X): 10000 ; p2X = 1000, p1B = 1000, p1X = 10000
+
+There are many duplicated values. They unique ones are: 100, 1,000, 10,000, 100,000 and 1,000,000
+
+;; Which of these possibilities remain if we instead use serialized procedures:
+;; (define x 10)
+;; (define s (make-serializer))
+;; (parallel-execute (s (lambda () (set! x (* x x))))
+;;   (s (lambda () (set! x (* x x x)))))
